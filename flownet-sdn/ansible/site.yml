@@ -1,0 +1,35 @@
+---
+- name: Provision FlowNet SDN (controller, monitoring stack and Mininet lab)
+  hosts: flownet
+  become: true
+  roles:
+    - base
+    - docker
+    - stack   # Ryu controller, FastAPI backend, Prometheus, Grafana (Docker Compose)
+    - lab     # Open vSwitch + Mininet topology as a systemd service
+
+  post_tasks:
+    - name: Wait for the backend API to answer
+      ansible.builtin.uri:
+        url: http://localhost:8000/api/health
+        return_content: true
+      register: health
+      until: health.status == 200
+      retries: 20
+      delay: 5
+
+    - name: Wait until the controller reports both switches
+      ansible.builtin.uri:
+        url: http://localhost:8000/api/overview
+        return_content: true
+      register: overview
+      until: overview.json.switches_connected | int == overview.json.switches_expected | int
+      retries: 20
+      delay: 5
+
+    - name: Show where to look
+      ansible.builtin.debug:
+        msg:
+          - "API docs : http://{{ ansible_default_ipv4.address | default('localhost') }}:8000/docs"
+          - "Grafana  : http://{{ ansible_default_ipv4.address | default('localhost') }}:3000  (user: admin)"
+          - "Network health: {{ overview.json.network_health }}"

@@ -1,0 +1,8 @@
+---
+- name: Rebuild stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ flownet_dir }}"
+    profiles: [live]
+    build: always
+    recreate: auto
+    state: present

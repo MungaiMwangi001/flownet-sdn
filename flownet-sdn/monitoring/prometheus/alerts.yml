@@ -1,0 +1,27 @@
+groups:
+  - name: flownet
+    rules:
+      - alert: SDNControllerDown
+        expr: flownet_controller_up == 0
+        for: 15s
+        labels: {severity: critical}
+        annotations:
+          summary: "SDN controller is unreachable"
+      - alert: SwitchDisconnected
+        expr: flownet_switches_connected < flownet_switches_expected
+        for: 15s
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $value }} switch(es) connected, fewer than expected"
+      - alert: BackendDown
+        expr: up{job="flownet-backend"} == 0
+        for: 15s
+        labels: {severity: critical}
+        annotations:
+          summary: "FlowNet backend is not being scraped"
+      - alert: PortPacketDrops
+        expr: rate(flownet_port_rx_dropped_total[2m]) > 0
+        for: 1m
+        labels: {severity: warning}
+        annotations:
+          summary: "Dropped packets on {{ $labels.switch }} port {{ $labels.port }}"

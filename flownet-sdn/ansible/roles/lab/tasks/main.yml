@@ -1,0 +1,25 @@
+---
+- name: Install Open vSwitch and Mininet
+  ansible.builtin.apt:
+    name: [openvswitch-switch, mininet, python3]
+    state: present
+
+- name: Make sure the Open vSwitch daemon is running
+  ansible.builtin.service:
+    name: openvswitch-switch
+    state: started
+    enabled: true
+
+- name: Install the lab systemd unit
+  ansible.builtin.template:
+    src: flownet-lab.service.j2
+    dest: /etc/systemd/system/flownet-lab.service
+    mode: "0644"
+  notify: Restart lab
+
+- name: Enable and start the lab (Mininet topology + agent)
+  ansible.builtin.systemd:
+    name: flownet-lab
+    daemon_reload: true
+    enabled: true
+    state: started

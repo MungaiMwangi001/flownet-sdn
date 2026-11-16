@@ -1,0 +1,31 @@
+---
+- name: Create the install directory
+  ansible.builtin.file:
+    path: "{{ flownet_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy the application files
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../{{ item }}"
+    dest: "{{ flownet_dir }}/"
+    mode: preserve
+  loop: [backend, controller, monitoring, network-lab, docker-compose.yml]
+  notify: Rebuild stack
+
+- name: Render the environment file (holds the Grafana password)
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ flownet_dir }}/.env"
+    mode: "0600"
+  notify: Rebuild stack
+
+- name: Start the stack (live profile)
+  community.docker.docker_compose_v2:
+    project_src: "{{ flownet_dir }}"
+    profiles: [live]
+    build: always
+    state: present
+
+- name: Flush handlers so the stack is current before the lab starts
+  ansible.builtin.meta: flush_handlers

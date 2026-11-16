@@ -1,0 +1,16 @@
+[Unit]
+Description=FlowNet SDN lab (Mininet + Open vSwitch)
+After=network-online.target openvswitch-switch.service docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Clean up leftovers from a previous run, then build the topology and serve the agent.
+ExecStartPre=/usr/bin/mn -c
+ExecStart=/usr/bin/python3 {{ flownet_dir }}/network-lab/topology.py --agent-host {{ lab_agent_host }} --agent-port {{ lab_agent_port }}
+# The agent binds to the docker gateway address, which only exists once the compose network is up.
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

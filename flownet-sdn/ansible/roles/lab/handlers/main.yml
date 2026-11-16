@@ -1,0 +1,6 @@
+---
+- name: Restart lab
+  ansible.builtin.systemd:
+    name: flownet-lab
+    daemon_reload: true
+    state: restarted
